@@ -46,7 +46,7 @@ var Node = function(data) {
   const OTBM_WAYPOINTS = 0x0f;
   const OTBM_WAYPOINT = 0x10;
 
-  switch (data.readUInt8(0)) {
+  switch(data.readUInt8(0)) {
 
     // High level map data (e.g. areas, towns, and waypoints)
     case OTBM_MAP_DATA:
@@ -134,7 +134,7 @@ Node.prototype.getChildName = function() {
     case "OTBM_TOWNS":
       return "towns";
     case "OTBM_ITEM":
-	  return "content";
+      return "content";
     case "OTBM_MAP_DATA":
       return "features";
     default:
