@@ -1,1 +1,109 @@
-{"identifier":0,"OTBMHeader":{"version":2,"mapWidth":2048,"mapHeight":2048,"itemsMajorVersion":3,"itemsMinorVersion":57},"data":{"nodes":[{"type":"OTBM_MAP_DATA","features":[{"type":"OTBM_TILE_AREA","x":768,"y":768,"z":7,"tiles":[{"type":"OTBM_TILE","x":231,"y":242,"id":100},{"type":"OTBM_TILE","x":231,"y":243,"id":100,"items":[{"type":"OTBM_ITEM","id":2261,"count":6,"runeCharges":6}]},{"type":"OTBM_TILE","x":232,"y":242,"id":100},{"type":"OTBM_TILE","x":232,"y":243,"id":100,"items":[{"type":"OTBM_ITEM","id":1397,"aid":10001,"uid":10002,"destination":{"x":3,"y":3,"z":7}}]},{"type":"OTBM_TILE","x":233,"y":242,"id":100},{"type":"OTBM_TILE","x":233,"y":243,"id":100},{"type":"OTBM_TILE","x":231,"y":244,"id":100,"items":[{"type":"OTBM_ITEM","id":1988,"content":[{"type":"OTBM_ITEM","id":1950,"text":"Time is a flat circle."},{"type":"OTBM_ITEM","id":1997,"content":[{"type":"OTBM_ITEM","id":2153}]}]}]},{"type":"OTBM_TILE","x":232,"y":244,"id":100},{"type":"OTBM_TILE","x":233,"y":244,"id":100,"items":[{"type":"OTBM_ITEM","id":2148,"count":5}]}]},{"type":"OTBM_TOWNS"},{"type":"OTBM_WAYPOINTS"}]}]}}
+{
+	"identifier": 0,
+	"OTBMHeader": {
+		"version": 2,
+		"mapWidth": 2048,
+		"mapHeight": 2048,
+		"itemsMajorVersion": 3,
+		"itemsMinorVersion": 57
+	},
+	"data": {
+		"nodes": [{
+			"type": "OTBM_MAP_DATA",
+			"features": [{
+				"type": "OTBM_TILE_AREA",
+				"x": 768,
+				"y": 768,
+				"z": 7,
+				"tiles": [{
+					"type": "OTBM_TILE",
+					"x": 231,
+					"y": 242,
+					"id": 100
+				}, {
+					"type": "OTBM_TILE",
+					"x": 231,
+					"y": 243,
+					"id": 100,
+					"items": [{
+						"type": "OTBM_ITEM",
+						"id": 2261,
+						"count": 6,
+						"runeCharges": 6
+					}]
+				}, {
+					"type": "OTBM_TILE",
+					"x": 232,
+					"y": 242,
+					"id": 100
+				}, {
+					"type": "OTBM_TILE",
+					"x": 232,
+					"y": 243,
+					"id": 100,
+					"items": [{
+						"type": "OTBM_ITEM",
+						"id": 1397,
+						"aid": 10001,
+						"uid": 10002,
+						"destination": {
+							"x": 3,
+							"y": 3,
+							"z": 7
+						}
+					}]
+				}, {
+					"type": "OTBM_TILE",
+					"x": 233,
+					"y": 242,
+					"id": 100
+				}, {
+					"type": "OTBM_TILE",
+					"x": 233,
+					"y": 243,
+					"id": 100
+				}, {
+					"type": "OTBM_TILE",
+					"x": 231,
+					"y": 244,
+					"id": 100,
+					"items": [{
+						"type": "OTBM_ITEM",
+						"id": 1988,
+						"content": [{
+							"type": "OTBM_ITEM",
+							"id": 1950,
+							"text": "Time is a flat circle."
+						}, {
+							"type": "OTBM_ITEM",
+							"id": 1997,
+							"content": [{
+								"type": "OTBM_ITEM",
+								"id": 2153
+							}]
+						}]
+					}]
+				}, {
+					"type": "OTBM_TILE",
+					"x": 232,
+					"y": 244,
+					"id": 100
+				}, {
+					"type": "OTBM_TILE",
+					"x": 233,
+					"y": 244,
+					"id": 100,
+					"items": [{
+						"type": "OTBM_ITEM",
+						"id": 2148,
+						"count": 5
+					}]
+				}]
+			}, {
+				"type": "OTBM_TOWNS"
+			}, {
+				"type": "OTBM_WAYPOINTS"
+			}]
+		}]
+	}
+}
