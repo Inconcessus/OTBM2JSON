@@ -17,9 +17,10 @@ fs.readFile(__INFILE__, function(error, data) {
 
   // Create an object to hold the data
   var mapData = {
-    identifier: MAP_IDENTIFIER,
-    OTBMHeader: OTBMRootHeader(data.slice(6, 22)),
-    data: parseNode(data.slice(4))
+    "version: __VERSION__,
+    "identifier": MAP_IDENTIFIER,
+    "OTBMHeader": OTBMRootHeader(data.slice(6, 22)),
+    "data": parseNode(data.slice(4))
   }
 
   // Write the JSON output
