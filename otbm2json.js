@@ -17,7 +17,7 @@ fs.readFile(__INFILE__, function(error, data) {
 
   // Create an object to hold the data
   var mapData = {
-	"version": __VERSION__,
+    "version": __VERSION__,
     "identifier": MAP_IDENTIFIER,
     "OTBMHeader": OTBMRootHeader(data.slice(6, 22)),
     "data": parseNode(data.slice(4))
@@ -326,12 +326,12 @@ function parseNode(data) {
   
   // Make sure we account for the 0xFD escape character
   while(true) {
-    iEsc = data.slice(0, iDepth).indexOf(0xFD);
-    if(data.readUInt8(iEsc + 1) === 0xFF || data.readUInt8(iEsc + 1) === 0xFE || data.readUInt8(iEsc + 1) === 0xFD) {
+    iEsc = data.slice(0, iDepth).indexOf(ESCAPE_CHAR);
+    if(data.readUInt8(iEsc + 1) === NODE_END || data.readUInt8(iEsc + 1) === NODE_START || data.readUInt8(iEsc + 1) === ESCAPE_CHAR) {
       data = Buffer.concat([data.slice(0, iEsc), data.slice(iEsc + 1)]); 
-	} else {
+    } else {
       break;
-	}
+    }
   }
 
   // Node data at current depth until next depth change
