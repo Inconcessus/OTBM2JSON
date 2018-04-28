@@ -17,10 +17,9 @@ fs.readFile(__INFILE__, function(error, data) {
 
   // Create an object to hold the data
   var mapData = {
-    "version": __VERSION__,
-    "identifier": MAP_IDENTIFIER,
-    "OTBMHeader": OTBMRootHeader(data.slice(6, 22)),
-    "data": parseNode(data.slice(4))
+    identifier: MAP_IDENTIFIER,
+    OTBMHeader: OTBMRootHeader(data.slice(6, 22)),
+    data: parseNode(data.slice(4))
   }
 
   // Write the JSON output
@@ -29,6 +28,20 @@ fs.readFile(__INFILE__, function(error, data) {
   });
   
 });
+
+const replace = (buf, a, b) => {
+
+  if (!Buffer.isBuffer(buf)) buf = Buffer(buf);
+  const idx = buf.indexOf(a);
+  if (idx === -1) return buf;
+  if (!Buffer.isBuffer(b)) b = Buffer(b);
+
+  const before = buf.slice(0, idx);
+  const after = replace(buf.slice(idx + a.length), a, b);
+  const len = idx + b.length + after.length;
+  return Buffer.concat([ before, b, after ], len);
+  
+}
 
 var Node = function(data) {
 	
@@ -46,9 +59,9 @@ var Node = function(data) {
   const OTBM_HOUSETILE = 0x0e;
   const OTBM_WAYPOINTS = 0x0f;
   const OTBM_WAYPOINT = 0x10;
-
-  switch(data.readUInt8(0)) {
-
+  
+  switch (data.readUInt8(0)) {
+	  
     // High level map data (e.g. areas, towns, and waypoints)
     case OTBM_MAP_DATA:
       this.type = "OTBM_MAP_DATA";
@@ -135,7 +148,7 @@ Node.prototype.getChildName = function() {
     case "OTBM_TOWNS":
       return "towns";
     case "OTBM_ITEM":
-      return "content";
+	  return "content";
     case "OTBM_MAP_DATA":
       return "features";
     default:
@@ -185,16 +198,16 @@ function parseAttributes(data) {
   const OTBM_ATTR_RUNE_CHARGES = 0x16;
 
   var i = 0;
-
+  
   // Collect additional properties
   var properties = new Object();
-
+  
   // Read buffer from beginning
   while(i + 1 < data.length) {
-	  
+	
     // Read the leading byte
-    switch (data.readUInt8(i++)) {
-		
+    switch(data.readUInt8(i++)) {
+	
       // Text is written (N bytes)
       case OTBM_ATTR_TEXT:
         properties.text = readASCIIString16LE(data.slice(i));
@@ -280,6 +293,27 @@ function parseAttributes(data) {
   
 }
 
+function getDepthChange(data) {
+
+  const NODE_MISSING = -1;
+  const ESCAPE_CHAR = 0xfd;
+  const NODE_START = 0xfe;
+  const NODE_END = 0xff;
+  
+  var iStart = data.indexOf(NODE_START);
+  var iEnd = data.indexOf(NODE_END);
+
+  // If identifiers are missing
+  if (iStart === NODE_MISSING) {
+    return iEnd;
+  } else if (iEnd === NODE_MISSING) {
+    return iStart;
+  } else {
+    return Math.min(data.indexOf(NODE_START), data.indexOf(NODE_END));
+  }
+  
+}
+
 function parseNode(data) {
 	
   /* function parseNode
@@ -292,22 +326,25 @@ function parseNode(data) {
   const NODE_START = 0xfe;
   const NODE_END = 0xff;
 
-  var iDepth;
-
   // Slice off the initial byte (NODE_START)
   var data = data.slice(1);
 
-  // Look for the position of depth change
-  var iStart = data.indexOf(NODE_START);
-  var iEnd = data.indexOf(NODE_END);
-
-  // If identifiers are missing
-  if (iStart === NODE_MISSING) {
-    iDepth = iEnd;
-  } else if (iEnd === NODE_MISSING) {
-    iDepth = iStart;
-  } else {
-    iDepth = Math.min(data.indexOf(NODE_START), data.indexOf(NODE_END));
+  // Make sure we account for the 0xFD escape character
+  var iDepth = getDepthChange(data);
+  while(data.readUInt8(iDepth - 1) === ESCAPE_CHAR) {
+    iDepth += getDepthChange(data.slice(iDepth + 1));
+  }
+  
+  var iEsc;
+  
+  // Make sure we account for the 0xFD escape character
+  while(true) {
+    iEsc = data.slice(0, iDepth).indexOf(0xFD);
+    if(data.readUInt8(iEsc + 1) === 0xFF || data.readUInt8(iEsc + 1) === 0xFE || data.readUInt8(iEsc + 1) === 0xFD) {
+      data = Buffer.concat([data.slice(0, iEsc), data.slice(iEsc + 1)]); 
+	} else {
+      break;
+	}
   }
 
   // Node data at current depth until next depth change
@@ -342,8 +379,9 @@ function parseNode(data) {
           return currentNode;
         }
         break;
-    }
-
+		
+	}
+	
     iDepth++;
   }
   
