@@ -11,21 +11,25 @@ fs.readFile(__INFILE__, function(error, data) {
   const MAP_IDENTIFIER = data.readUInt32LE(0);
 
   // Confirm OTBM format by reading magic bytes (NULL or "OTBM")
-  if (MAP_IDENTIFIER !== 0x00000000 && MAP_IDENTIFIER !== 0x4D42544F) {
+  if(MAP_IDENTIFIER !== 0x00000000 && MAP_IDENTIFIER !== 0x4D42544F) {
     throw("Unknown OTBM format: unexpected magic bytes.");
   }
+
+  var start = Date.now();
 
   // Create an object to hold the data
   var mapData = {
     "version": __VERSION__,
     "identifier": MAP_IDENTIFIER,
     "OTBMHeader": OTBMRootHeader(data.slice(6, 22)),
-    "data": parseNode(data.slice(4))
+    "data": parseNode(data.slice(22))
   };
 
+  var end = Date.now() - start;
+  
   // Write the JSON output
   fs.writeFile(__OUTFILE__, JSON.stringify(mapData), function(error) {
-    console.log("Data succesfully written to " + __OUTFILE__ + ".");
+    console.log("OTBM data succesfully parsed in " + end + "ms and written to " + __OUTFILE__ + ".");
   });
   
 });
@@ -37,6 +41,7 @@ var Node = function(data, children) {
    */
 
   // Magic bytes
+  const OTBM_MAP_DATA = 0x00;
   const OTBM_MAP_DATA = 0x02;
   const OTBM_TILE_AREA = 0x04;
   const OTBM_TILE = 0x05;
@@ -51,6 +56,7 @@ var Node = function(data, children) {
   data = this.removeEscapeCharacters(data);
 
   switch(data.readUInt8(0)) {
+
     // High level map data (e.g. areas, towns, and waypoints)
     case OTBM_MAP_DATA:
       this.type = "OTBM_MAP_DATA";
@@ -128,6 +134,7 @@ var Node = function(data, children) {
 }
 
 Node.prototype.removeEscapeCharacters = function(nodeData) {
+
   /* FUNCTION removeEscapeCharacter
    * Removes 0xFD escape character from the byte string
    */
@@ -213,6 +220,7 @@ function parseAttributes(data) {
 
   // Magic identification bytes
   const OTBM_ATTR_DESCRIPTION = 0x01;
+  const OTBM_ATTR_EXT_FILE = 0x02;
   const OTBM_ATTR_TILE_FLAGS = 0x03;
   const OTBM_ATTR_ACTION_ID = 0x04;
   const OTBM_ATTR_UNIQUE_ID = 0x05;
@@ -221,33 +229,59 @@ function parseAttributes(data) {
   const OTBM_ATTR_TELE_DEST = 0x08;
   const OTBM_ATTR_ITEM = 0x09;
   const OTBM_ATTR_DEPOT_ID = 0x0A;
+  const OTBM_ATTR_EXT_SPAWN_FILE = 0x0B;
+  const OTBM_ATTR_EXT_HOUSE_FILE = 0x0D;
   const OTBM_ATTR_HOUSEDOORID = 0x0E;
   const OTBM_ATTR_COUNT = 0x0F;
   const OTBM_ATTR_RUNE_CHARGES = 0x16;
 
   var i = 0;
-
+  
   // Collect additional properties
   var properties = new Object();
-
+  
   // Read buffer from beginning
   while(i + 1 < data.length) {
 	  
     // Read the leading byte
     switch(data.readUInt8(i++)) {
-		
-      // Text is written (N bytes)
+
+      // Text is written
       case OTBM_ATTR_TEXT:
         properties.text = readASCIIString16LE(data.slice(i));
         i += properties.text.length + 2;
         break;
 
+      // Spawn file name
+      case OTBM_ATTR_EXT_SPAWN_FILE:
+        properties.spawnfile = readASCIIString16LE(data.slice(i));
+        i += properties.spawnfile.length + 2;
+        break;
+
+      // House file name
+      case OTBM_ATTR_EXT_HOUSE_FILE:
+        properties.housefile = readASCIIString16LE(data.slice(i));
+        i += properties.housefile.length + 2;
+        break;
+		
       // House door identifier (1 byte)
       case OTBM_ATTR_HOUSEDOORID:
         properties.houseDoorId = data.readUInt8(i);
-        i++;
+        i += properties.houseDoorId.length + 2;
         break;
 
+      // Description is written (N bytes)
+	  // May be written multiple times
+      case OTBM_ATTR_DESCRIPTION:
+        var descriptionString = readASCIIString16LE(data.slice(i));
+        if(properties.description) {
+          properties.description = properties.description + " " + descriptionString;
+        } else {
+          properties.description = descriptionString;
+        }
+        i += descriptionString.length + 2;
+        break;
+		
       // Description is written (N bytes)
       case OTBM_ATTR_DESC:
         properties.text = readASCIIString16LE(data.slice(i));
