@@ -22,8 +22,8 @@ fs.readFile(__INFILE__, function(error, data) {
     "version": __VERSION__,
     "identifier": MAP_IDENTIFIER,
     "OTBMHeader": OTBMRootHeader(data.slice(6, 22)),
-    "data": parseNode(data.slice(22))
-  };
+    "data": parseNode(data.slice(22)).node
+  }
 
   var end = Date.now() - start;
   
