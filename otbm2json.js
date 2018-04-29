@@ -11,8 +11,8 @@ fs.readFile(__INFILE__, function(error, data) {
   const MAP_IDENTIFIER = data.readUInt32LE(0);
 
   // Confirm OTBM format by reading magic bytes (NULL or "OTBM")
-  if (MAP_IDENTIFIER !== 0x00000000 && MAP_IDENTIFIER !== 0x4d42544f) {
-    throw "Unknown OTBM format: unexpected magic bytes.";
+  if (MAP_IDENTIFIER !== 0x00000000 && MAP_IDENTIFIER !== 0x4D42544F) {
+    throw("Unknown OTBM format: unexpected magic bytes.");
   }
 
   // Create an object to hold the data
@@ -21,7 +21,7 @@ fs.readFile(__INFILE__, function(error, data) {
     "identifier": MAP_IDENTIFIER,
     "OTBMHeader": OTBMRootHeader(data.slice(6, 22)),
     "data": parseNode(data.slice(4))
-  }
+  };
 
   // Write the JSON output
   fs.writeFile(__OUTFILE__, JSON.stringify(mapData), function(error) {
@@ -30,8 +30,8 @@ fs.readFile(__INFILE__, function(error, data) {
   
 });
 
-var Node = function(data) {
-	
+var Node = function(data, children) {
+
   /* Class Node
    * Holds a particular OTBM node of type (see below)
    */
@@ -41,20 +41,22 @@ var Node = function(data) {
   const OTBM_TILE_AREA = 0x04;
   const OTBM_TILE = 0x05;
   const OTBM_ITEM = 0x06;
-  const OTBM_TOWNS = 0x0c;
-  const OTBM_TOWN = 0x0d;
-  const OTBM_HOUSETILE = 0x0e;
-  const OTBM_WAYPOINTS = 0x0f;
+  const OTBM_TOWNS = 0x0C;
+  const OTBM_TOWN = 0x0D;
+  const OTBM_HOUSETILE = 0x0E;
+  const OTBM_WAYPOINTS = 0x0F;
   const OTBM_WAYPOINT = 0x10;
-  
-  switch (data.readUInt8(0)) {
-	  
+
+  // Remove the escape character from the node data string
+  data = this.removeEscapeCharacters(data);
+
+  switch(data.readUInt8(0)) {
     // High level map data (e.g. areas, towns, and waypoints)
     case OTBM_MAP_DATA:
       this.type = "OTBM_MAP_DATA";
       Object.assign(this, parseAttributes(data.slice(1)));
       break;
-	  
+
     // A tile area
     case OTBM_TILE_AREA:
       this.type = "OTBM_TILE_AREA";
@@ -62,7 +64,7 @@ var Node = function(data) {
       this.y = data.readUInt16LE(3);
       this.z = data.readUInt8(5);
       break;
-	  
+
     // A specific tile at location inside the parent tile area
     case OTBM_TILE:
       this.type = "OTBM_TILE";
@@ -70,7 +72,7 @@ var Node = function(data) {
       this.y = data.readUInt8(2);
       Object.assign(this, parseAttributes(data.slice(3)));
       break;
-	  
+
     // A specific item inside the parent tile
     case OTBM_ITEM:
       this.type = "OTBM_ITEM";
@@ -117,35 +119,74 @@ var Node = function(data) {
       this.z = data.readUInt8(11 + this.name.length);
       break;
   }
+
+  // Set node children
+  if(children.length) {
+    this.setChildren(children);
+  }
+  
+}
+
+Node.prototype.removeEscapeCharacters = function(nodeData) {
+  /* FUNCTION removeEscapeCharacter
+   * Removes 0xFD escape character from the byte string
+   */
+
+  const ESCAPE_CHAR = 0xFD;
+
+  var iEsc = -1;
+
+  while(true) {
+
+    // Find the next escape character
+    iEsc = nodeData.slice(iEsc + 1).indexOf(ESCAPE_CHAR);
+
+    // No more: stop iteration
+    if(iEsc === -1) {
+      return nodeData;
+    }
+
+    // Remove the character from the buffer
+    nodeData = Buffer.concat([
+      nodeData.slice(0, iEsc),
+      nodeData.slice(iEsc + 1)
+    ]);
+  }
   
 };
 
-Node.prototype.getChildName = function() {
-	
-  /* FUNCTION Node.getChildName
-   * Give children of a node a particular identifier
-    */
+Node.prototype.setChildren = function(children) {
 
+  /* FUNCTION Node.setChildren
+   * Give children of a node a particular identifier
+   */
+ 
   switch(this.type) {
     case "OTBM_TILE_AREA":
-      return "tiles";
+      this.tiles = children;
+      break;
     case "OTBM_TILE":
     case "OTBM_HOUSETILE":
-      return "items";
+      this.items = children;
+      break;
     case "OTBM_TOWNS":
-      return "towns";
+      this.towns = children;
+      break;
     case "OTBM_ITEM":
-	  return "content";
+      this.content = children;
+      break;
     case "OTBM_MAP_DATA":
-      return "features";
+      this.features = children;
+      break;
     default:
-      return "nodes";
+      this.nodes = children;
+      break;
   }
   
 };
 
 function readASCIIString16LE(data) {
-	
+
   /* FUNCTION readASCIIString16LE
    * Reads a string of N bytes with its length
    * deteremined by the value of its first two bytes
@@ -156,7 +197,7 @@ function readASCIIString16LE(data) {
 }
 
 function parseAttributes(data) {
-	
+
   /* FUNCTION parseAttributes
    * Parses a nodes attribute structure
    */
@@ -179,22 +220,22 @@ function parseAttributes(data) {
   const OTBM_ATTR_DESC = 0x07;
   const OTBM_ATTR_TELE_DEST = 0x08;
   const OTBM_ATTR_ITEM = 0x09;
-  const OTBM_ATTR_DEPOT_ID = 0x0a;
-  const OTBM_ATTR_HOUSEDOORID = 0x0e;
-  const OTBM_ATTR_COUNT = 0x0f;
+  const OTBM_ATTR_DEPOT_ID = 0x0A;
+  const OTBM_ATTR_HOUSEDOORID = 0x0E;
+  const OTBM_ATTR_COUNT = 0x0F;
   const OTBM_ATTR_RUNE_CHARGES = 0x16;
 
   var i = 0;
-  
+
   // Collect additional properties
   var properties = new Object();
-  
+
   // Read buffer from beginning
   while(i + 1 < data.length) {
-	
+	  
     // Read the leading byte
     switch(data.readUInt8(i++)) {
-	
+		
       // Text is written (N bytes)
       case OTBM_ATTR_TEXT:
         properties.text = readASCIIString16LE(data.slice(i));
@@ -266,110 +307,74 @@ function parseAttributes(data) {
       // Teleporter given destination (x, y, z using 2, 2, 1 bytes respectively)
       case OTBM_ATTR_TELE_DEST:
         properties.destination = {
-          x: data.readUInt16LE(i),
-          y: data.readUInt16LE(i + 2),
-          z: data.readUInt8(i + 4)
-        };
+          "x": data.readUInt16LE(i),
+          "y": data.readUInt16LE(i + 2),
+          "z": data.readUInt8(i + 4)
+        }
         i += 5;
         break;
     }
-	
+
   }
 
   return properties;
   
 }
 
-function getDepthChange(data) {
-
-  const NODE_MISSING = -1;
-  const ESCAPE_CHAR = 0xfd;
-  const NODE_START = 0xfe;
-  const NODE_END = 0xff;
-  
-  var iStart = data.indexOf(NODE_START);
-  var iEnd = data.indexOf(NODE_END);
-
-  // If identifiers are missing
-  if (iStart === NODE_MISSING) {
-    return iEnd;
-  } else if (iEnd === NODE_MISSING) {
-    return iStart;
-  } else {
-    return Math.min(data.indexOf(NODE_START), data.indexOf(NODE_END));
-  }
-  
-}
-
 function parseNode(data) {
-	
-  /* function parseNode
-   * Recursively parses nodes in the OTBM node tree
+
+  /* FUNCTION parseNode
+   * Recursively parses OTBM nodal tree structure
    */
+ 
+  const ESCAPE_CHAR = 0xFD;
+  const NODE_START = 0xFE;
+  const NODE_END = 0xFF;
 
-  // Magic delimiters
-  const NODE_MISSING = -1;
-  const ESCAPE_CHAR = 0xfd;
-  const NODE_START = 0xfe;
-  const NODE_END = 0xff;
+  // Cut off the initializing 0xFE identifier
+  data = data.slice(1);
 
-  // Slice off the initial byte (NODE_START)
-  var data = data.slice(1);
+  var i = 0;
+  var children = new Array();
+  var nodeData = null;
+  var child;
 
-  // Make sure we account for the 0xFD escape character
-  var iDepth = getDepthChange(data);
-  while(data.readUInt8(iDepth - 1) === ESCAPE_CHAR) {
-    iDepth += getDepthChange(data.slice(iDepth + 1));
-  }
-  
-  var iEsc;
-  
-  // Make sure we account for the 0xFD escape character
-  while(true) {
-    iEsc = data.slice(0, iDepth).indexOf(ESCAPE_CHAR);
-    if(data.readUInt8(iEsc + 1) === NODE_END || data.readUInt8(iEsc + 1) === NODE_START || data.readUInt8(iEsc + 1) === ESCAPE_CHAR) {
-      data = Buffer.concat([data.slice(0, iEsc), data.slice(iEsc + 1)]); 
-    } else {
-      break;
+  // Start reading the array
+  while(i < data.length) {
+
+    var cByte = data.readUInt8(i);
+
+    // Data belonging to the parent node, between 0xFE and (OxFE || 0xFF)
+    if(nodeData === null && (cByte === NODE_START || cByte === NODE_END)) {
+      nodeData = data.slice(0, i);
     }
-  }
 
-  // Node data at current depth until next depth change
-  var currentNode = new Node(data.slice(0, iDepth));
+    // Escape character: skip reading this and following byte
+    if(cByte === ESCAPE_CHAR) {
+      i = i + 2;
+      continue;
+    }
 
-  // Current node depth
-  var cDepth = 0;
+    // A new node is started within another node: recursion
+    if(cByte === NODE_START) {
+      child = parseNode(data.slice(i));
+      children.push(child.node);
 
-  while(true) {
-	  
-    // Read the byte
-    switch (data.readUInt8(iDepth)) {
-		
-      // Identified the start of a new node
-      case NODE_START:
-        if (++cDepth === 1) {
-			
-          var childName = currentNode.getChildName();
+      // Skip index over full child length
+      i = i + 2 + child.i;
+      continue;
+    }
 
-          if (!currentNode[childName]) {
-            currentNode[childName] = new Array();
-          }
+    // Node termination
+    if(cByte === NODE_END) {
+      return {
+        "node": new Node(nodeData, children),
+        "i": i
+      }
+    }
 
-          // Recursion
-          currentNode[childName].push(parseNode(data.slice(iDepth)));
-        }
-        break;
-
-      // Current node is closed
-      case NODE_END:
-        if (--cDepth === -1) {
-          return currentNode;
-        }
-        break;
-		
-	}
+    i++;
 	
-    iDepth++;
   }
   
 }
@@ -386,6 +391,6 @@ function OTBMRootHeader(buffer) {
     mapHeight: buffer.readUInt16LE(6),
     itemsMajorVersion: buffer.readUInt32LE(8),
     itemsMinorVersion: buffer.readUInt32LE(12)
-  };
+  }
   
 }
