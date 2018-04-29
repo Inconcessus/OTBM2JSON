@@ -41,7 +41,6 @@ var Node = function(data, children) {
    */
 
   // Magic bytes
-  const OTBM_MAP_DATA = 0x00;
   const OTBM_MAP_DATA = 0x02;
   const OTBM_TILE_AREA = 0x04;
   const OTBM_TILE = 0x05;
@@ -271,7 +270,7 @@ function parseAttributes(data) {
         break;
 
       // Description is written (N bytes)
-	  // May be written multiple times
+      // May be written multiple times
       case OTBM_ATTR_DESCRIPTION:
         var descriptionString = readASCIIString16LE(data.slice(i));
         if(properties.description) {
