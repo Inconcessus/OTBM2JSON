@@ -12,10 +12,11 @@ The library provides two functions for reading and writing OTBM:
     otbm2json.write(filename, data);
 
 # Example
-An example script `example.js` is provided. This script uses the `map.otbm` in this repository and replaces all floor tiles with a chessboard pattern.
+An example script `example.js` is provided. This script uses the `examples/void.otbm` in this repository and replaces all floor tiles with a chessboard and writes to  `examples/chess.otbm` pattern.
 
 <p align="center">
   <img src="void.png">
+  <img src="convert.png">
   <img src="chess.png">
 </p>
 
