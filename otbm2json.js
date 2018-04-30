@@ -36,7 +36,7 @@ const TILESTATE_NOLOGOUT = 0x0008;
 const TILESTATE_PVPZONE = 0x0010;
 const TILESTATE_REFRESH = 0x0020;
 
-__VERSION__ = "0.1.0";
+__VERSION__ = "0.2.0";
 
 function writeOTBM(__OUTFILE__, data) {
 
