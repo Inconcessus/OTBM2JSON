@@ -9,6 +9,7 @@ Import the library in your script
 The library provides two functions for reading and writing OTBM:
 
     data = otbm2json.read(filename);
+    // ** Modify the data object here **
     otbm2json.write(filename, data);
 
 # Example
