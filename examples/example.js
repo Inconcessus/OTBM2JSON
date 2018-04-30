@@ -5,8 +5,8 @@
 
 const otbm2json = require("../otbm2json");
 
-const BLACK_TILE = 407;
 const WHITE_TILE = 406;
+const BLACK_TILE = 407;
 
 // Read the map data using the otbm2json library
 const mapData = otbm2json.read("void.otbm");
@@ -15,15 +15,19 @@ const mapData = otbm2json.read("void.otbm");
 mapData.data.nodes.forEach(function(x) {
 
   x.features.forEach(function(x) {
-
+    
+    // Skip anything that is not a tile area
     if(x.type !== "OTBM_TILE_AREA") return; 
 
+    // For each tile area; go over all actual tiles
     x.tiles.forEach(function(x) {
 
+      // Skip anything that is not a tile (e.g. house tiles)
       if(x.type !== "OTBM_TILE") return; 
 
-      // Create a chessboard pattern
-      if(x.x % 2 === 0 ^ x.y % 2 === 0) {
+      // Create a chessboard pattern using bitwise operators
+      // Replace the id property of each tile
+      if(x.x & 1 ^ x.y & 1) {
         x.tileid = BLACK_TILE;
       } else {
         x.tileid = WHITE_TILE;
