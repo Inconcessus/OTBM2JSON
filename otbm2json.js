@@ -36,7 +36,7 @@ const TILESTATE_NOLOGOUT = 0x0008;
 const TILESTATE_PVPZONE = 0x0010;
 const TILESTATE_REFRESH = 0x0020;
 
-__VERSION__ = "0.2.0";
+__VERSION__ = "0.1.0";
 
 function writeOTBM(__OUTFILE__, data) {
 
@@ -140,6 +140,12 @@ function writeOTBM(__OUTFILE__, data) {
         break;
       default:
         throw("Could not write node. Unknown node type: " + node.type); 
+    }
+
+    for(var i = 0; i < buffer.length; i++) {
+      if(buffer.readUInt8(i) === 0xFF || buffer.readUInt8(i) === 0xFE || buffer.readUInt8(i) === 0xFD) {
+        buffer = Buffer.concat([buffer.slice(0, i), new Buffer([0xFD]), buffer.slice(i)]); i++;
+      }
     }
   
     return buffer;
@@ -500,6 +506,7 @@ function readOTBM(__INFILE__) {
           properties.noLogout = flags & TILESTATE_NOLOGOUT;
           properties.PVPZone = flags & TILESTATE_PVPZONE;
           properties.refresh = flags & TILESTATE_REFRESH;
+  
           i += 4;
           break;
   
@@ -588,6 +595,7 @@ function readOTBM(__INFILE__) {
       if(cByte === NODE_START) {
         child = parseNode(data.slice(i));
         children.push(child.node);
+  
         // Skip index over full child length
         i = i + 2 + child.i;
         continue;
