@@ -14,7 +14,10 @@ The library provides two functions for reading and writing OTBM:
 # Example
 An example script `example.js` is provided. This script uses the `map.otbm` in this repository and replaces all floor tiles with a chessboard pattern.
 
-![Void](void.png) ![Chessboard](chess.png)
+<p align="center">
+  <img src="void.png">
+  <img src="chess.png">
+</p>
 
 # Version
 Current version 0.2.0. This is a work in progress.
