@@ -12,6 +12,9 @@ The library provides two functions for reading and writing OTBM:
     // ** Modify the data object here **
     otbm2json.write(filename, data);
 
+# JSON Structure
+The structure of the JSON read from and to `.otbm` can be seen in the example `OTBM.json`.
+
 # Example
 An example script `example.js` is provided. This script uses the `examples/void.otbm` in this repository and replaces all floor tiles with a chessboard and writes to  `examples/chess.otbm` pattern.
 
