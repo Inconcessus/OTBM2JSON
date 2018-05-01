@@ -36,18 +36,23 @@ const TILESTATE_NOLOGOUT = 0x0008;
 const TILESTATE_PVPZONE = 0x0010;
 const TILESTATE_REFRESH = 0x0020;
 
+const NODE_ESC = 0xFD;
+const NODE_INIT = 0xFE;
+const NODE_TERM = 0xFF;
+
 __VERSION__ = "0.1.0";
 
 function writeOTBM(__OUTFILE__, data) {
 
+  /* FUNCTION writeOTBM
+   * Writes OTBM from intermediary JSON structure
+   */
+
   function writeNode(node) {
   
-    /* function writeNode
+    /* FUNCTION writeNode
      * Recursively writes all JSON nodes to OTBM node structure
      */
-  
-    const START_NODE = Buffer.from([0xFE]);
-    const END_NODE = Buffer.from([0xFF]);
   
     // Get the child nodes for this particular nodes: recursion
     var child = getChildNode(node);
@@ -57,13 +62,18 @@ function writeOTBM(__OUTFILE__, data) {
     var nodeData = writeElement(node);
   
     // Concatenate own data with child and pad the nod with start & end
-    return Buffer.concat([START_NODE, nodeData, childData, END_NODE]);
+    return Buffer.concat([
+      Buffer.from([NODE_INIT]),
+      nodeData,
+      childData,
+      Buffer.from([NODE_TERM])
+    ]);
   
   }
   
   function getChildNode(node) {
   
-    /* FUNCTION Node.setChildren
+    /* FUNCTION getChildNode
      * Give children of a node a particular identifier
      */
   
@@ -260,13 +270,37 @@ function writeOTBM(__OUTFILE__, data) {
       buffer.writeUInt8(node.count, 1);
       attributeBuffer = Buffer.concat([attributeBuffer, buffer]);
     }
+
+    // Write the zone fields
+    if(node.zones) {
+      buffer = Buffer.alloc(5);
+      buffer.writeUInt8(OTBM_ATTR_TILE_FLAGS, 0);
+      var flags = 0x00000000;
+      if(node.zones.protection) {
+        flags |= TILESTATE_PROTECTIONZONE;
+      }
+      if(node.zones.noPVP) {
+        flags |= TILESTATE_NOPVP;
+      }
+      if(node.zones.noLogout) {
+        flags |= TILESTATE_NOLOGOUT;
+      }
+      if(node.zones.PVPZone) {
+        flags |= TILESTATE_PVPZONE;
+      }
+      if(node.zones.refresh) {
+        flags |= TILESTATE_REFRESH;
+      }
+      buffer.writeUInt32LE(flags, 1);
+      attributeBuffer = Buffer.concat([attributeBuffer, buffer]);
+    }
   
     return attributeBuffer;
   
   }
 
   // OTBM Header
-  const VERSION = Buffer.from([0x00, 0x00, 0x00, 0x00]);
+  const VERSION = Buffer.alloc(4).fill(0x00);
 
   // Write all nodes
   fs.writeFileSync(__OUTFILE__, Buffer.concat([VERSION, writeNode(data.data)]));
@@ -275,9 +309,13 @@ function writeOTBM(__OUTFILE__, data) {
 
 function readOTBM(__INFILE__) {
 
+  /* FUNCTION readOTBM
+   * Reads OTBM file to intermediary JSON structure
+   */
+
   var Node = function(data, children) {
   
-    /* Class Node
+    /* CLASS Node
      * Holds a particular OTBM node of type (see below)
      */
   
@@ -377,14 +415,12 @@ function readOTBM(__INFILE__) {
      * Removes 0xFD escape character from the byte string
      */
   
-    const ESCAPE_CHAR = 0xFD;
-  
     var iEsc = -1;
   
     while(true) {
   
       // Find the next escape character
-      iEsc = nodeData.slice(iEsc + 1).indexOf(ESCAPE_CHAR);
+      iEsc = nodeData.slice(iEsc + 1).indexOf(NODE_ESC);
   
       // No more: stop iteration
       if(iEsc === -1) {
@@ -511,11 +547,13 @@ function readOTBM(__INFILE__) {
           var flags = data.readUInt32LE(i);
   
           // Read individual tile flags using bitwise AND &
-          properties.protectionZone = flags & TILESTATE_PROTECTIONZONE;
-          properties.noPVP = flags & TILESTATE_NOPVP;
-          properties.noLogout = flags & TILESTATE_NOLOGOUT;
-          properties.PVPZone = flags & TILESTATE_PVPZONE;
-          properties.refresh = flags & TILESTATE_REFRESH;
+          properties.zones = {
+            "protection": flags & TILESTATE_PROTECTIONZONE,
+            "noPVP": flags & TILESTATE_NOPVP,
+            "noLogout": flags & TILESTATE_NOLOGOUT,
+            "PVPZone": flags & TILESTATE_PVPZONE,
+            "refresh": flags & TILESTATE_REFRESH
+          }
   
           i += 4;
           break;
@@ -573,10 +611,6 @@ function readOTBM(__INFILE__) {
      * Recursively parses OTBM nodal tree structure
      */
    
-    const ESCAPE_CHAR = 0xFD;
-    const NODE_START = 0xFE;
-    const NODE_END = 0xFF;
-  
     // Cut off the initializing 0xFE identifier
     data = data.slice(1);
   
@@ -591,18 +625,18 @@ function readOTBM(__INFILE__) {
       var cByte = data.readUInt8(i);
   
       // Data belonging to the parent node, between 0xFE and (OxFE || 0xFF)
-      if(nodeData === null && (cByte === NODE_START || cByte === NODE_END)) {
+      if(nodeData === null && (cByte === NODE_INIT || cByte === NODE_TERM)) {
         nodeData = data.slice(0, i);
       }
   
       // Escape character: skip reading this and following byte
-      if(cByte === ESCAPE_CHAR) {
+      if(cByte === NODE_ESC) {
         i = i + 2;
         continue;
       }
   
       // A new node is started within another node: recursion
-      if(cByte === NODE_START) {
+      if(cByte === NODE_INIT) {
         child = readNode(data.slice(i));
         children.push(child.node);
   
@@ -612,7 +646,7 @@ function readOTBM(__INFILE__) {
       }
   
       // Node termination
-      if(cByte === NODE_END) {
+      if(cByte === NODE_TERM) {
         return {
           "node": new Node(nodeData, children),
           "i": i
