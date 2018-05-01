@@ -40,7 +40,7 @@ const NODE_ESC = 0xFD;
 const NODE_INIT = 0xFE;
 const NODE_TERM = 0xFF;
 
-__VERSION__ = "0.1.0";
+__VERSION__ = "0.3.0";
 
 function writeOTBM(__OUTFILE__, data) {
 
