@@ -275,22 +275,12 @@ function writeOTBM(__OUTFILE__, data) {
     if(node.zones) {
       buffer = Buffer.alloc(5);
       buffer.writeUInt8(OTBM_ATTR_TILE_FLAGS, 0);
-      var flags = 0x00000000;
-      if(node.zones.protection) {
-        flags |= TILESTATE_PROTECTIONZONE;
-      }
-      if(node.zones.noPVP) {
-        flags |= TILESTATE_NOPVP;
-      }
-      if(node.zones.noLogout) {
-        flags |= TILESTATE_NOLOGOUT;
-      }
-      if(node.zones.PVPZone) {
-        flags |= TILESTATE_PVPZONE;
-      }
-      if(node.zones.refresh) {
-        flags |= TILESTATE_REFRESH;
-      }
+      var flags = TILESTATE_NONE;
+      flags |= node.zones.protection && TILESTATE_PROTECTIONZONE;
+      flags |= node.zones.noPVP && TILESTATE_NOPVP;
+      flags |= node.zones.noLogout && TILESTATE_NOLOGOUT;
+      flags |= node.zones.PVPZone && TILESTATE_PVPZONE;
+      flags |= node.zones.refresh && TILESTATE_REFRESH;
       buffer.writeUInt32LE(flags, 1);
       attributeBuffer = Buffer.concat([attributeBuffer, buffer]);
     }
