@@ -5,9 +5,6 @@
 
 const otbm2json = require("../../otbm2json");
 
-const BLACK_TILE = 407;
-const WHITE_TILE = 406;
-
 // Read the map data using the otbm2json library
 const mapData = otbm2json.read("grass.otbm");
 
