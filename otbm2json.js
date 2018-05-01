@@ -163,8 +163,8 @@ function writeOTBM(__OUTFILE__, data) {
      */
 
     for(var i = 0; i < buffer.length; i++) {
-      if(buffer.readUInt8(i) === 0xFF || buffer.readUInt8(i) === 0xFE || buffer.readUInt8(i) === 0xFD) {
-        buffer = Buffer.concat([buffer.slice(0, i), Buffer.from([0xFD]), buffer.slice(i)]); i++;
+      if(buffer.readUInt8(i) === NODE_TERM || buffer.readUInt8(i) === NODE_INIT || buffer.readUInt8(i) === NODE_ESC) {
+        buffer = Buffer.concat([buffer.slice(0, i), Buffer.from([NODE_ESC]), buffer.slice(i)]); i++;
       }
     }
 
@@ -187,7 +187,7 @@ function writeOTBM(__OUTFILE__, data) {
   
   function writeAttributes(node) {
   
-    /* function writeAttributes
+    /* FUNCTION writeAttributes
      * Writes additional node attributes
      */
   
