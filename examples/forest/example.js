@@ -1,6 +1,6 @@
 /*
  * Example script of using the otbm2json library
- * Changes all tiles on a map to chessboard pattern in global coordinates
+ * 25% chance to add a tree to a tile
  */
 
 const otbm2json = require("../../otbm2json");
@@ -26,6 +26,7 @@ function randomTree() {
     2706
   ];
 
+  // Return a random element
   return trees[Math.floor(Math.random() * trees.length)];
 
 }
