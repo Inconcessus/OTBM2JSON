@@ -1,5 +1,5 @@
 # OTBM2JSON
-NodeJS library for programmatically modifying Open Tibia Binary Mapping files. This framework reads .otbm files and parses them to an intermediary JSON format. This JSON structure can be changed programatically to make generic modifications. Once a change has been comitted to the structure, it can be encoded back to an .otbm file.
+NodeJS library for programmatically modifying Open Tibia Binary Mapping files. This framework reads .otbm files and parses them to an intermediary JSON format. This JSON structure can be changed programatically to make generic modifications. Once a change has been committed to the structure, it can be encoded back to an .otbm file.
 
 # JSON Structure
 The structure of the intermediary JSON format read from and to `.otbm` can be seen in the example `OTBM.json`.
