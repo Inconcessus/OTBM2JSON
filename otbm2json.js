@@ -36,7 +36,7 @@ const TILESTATE_NOLOGOUT = 0x0008;
 const TILESTATE_PVPZONE = 0x0010;
 const TILESTATE_REFRESH = 0x0020;
 
-__VERSION__ = "0.2.0";
+__VERSION__ = "0.1.0";
 
 function writeOTBM(__OUTFILE__, data) {
 
@@ -46,12 +46,12 @@ function writeOTBM(__OUTFILE__, data) {
      * Recursively writes all JSON nodes to OTBM node structure
      */
   
-    const START_NODE = new Buffer([0xFE]);
-    const END_NODE = new Buffer([0xFF]);
+    const START_NODE = Buffer.from([0xFE]);
+    const END_NODE = Buffer.from([0xFF]);
   
     // Get the child nodes for this particular nodes: recursion
     var child = getChildNode(node);
-    var childData = child ? Buffer.concat(child.map(writeNode)) : new Buffer(0);
+    var childData = child ? Buffer.concat(child.map(writeNode)) : Buffer.alloc(0); 
   
     // Finally parse the element itself
     var nodeData = writeElement(node);
@@ -97,7 +97,7 @@ function writeOTBM(__OUTFILE__, data) {
     // Write each node type
     switch(node.type) {
       case "OTBM_MAP_HEADER":
-        buffer = new Buffer(17);
+        buffer = Buffer.alloc(17); 
         buffer.writeUInt8(OTBM_MAP_HEADER, 0);
         buffer.writeUInt32LE(node.version, 1);
         buffer.writeUInt16LE(node.mapWidth, 5);
@@ -106,59 +106,69 @@ function writeOTBM(__OUTFILE__, data) {
         buffer.writeUInt32LE(node.itemsMinorVersion, 13);
         break;
       case "OTBM_MAP_DATA":
-        buffer = new Buffer(1);
+        buffer = Buffer.alloc(1); 
         buffer.writeUInt8(OTBM_MAP_DATA, 0);
         buffer = Buffer.concat([buffer, writeAttributes(node)]);
         break;
       case "OTBM_TILE_AREA":
-        buffer = new Buffer(6);
+        buffer = Buffer.alloc(6); 
         buffer.writeUInt8(OTBM_TILE_AREA, 0);
         buffer.writeUInt16LE(node.x, 1);
         buffer.writeUInt16LE(node.y, 3);
         buffer.writeUInt8(node.z, 5);
         break;
       case "OTBM_TILE":
-        buffer = new Buffer(3);
+        buffer = Buffer.alloc(3); 
         buffer.writeUInt8(OTBM_TILE, 0);
         buffer.writeUInt8(node.x, 1);
         buffer.writeUInt8(node.y, 2);
         buffer = Buffer.concat([buffer, writeAttributes(node)]);
         break;
       case "OTBM_ITEM":
-        buffer = new Buffer(3);
+        buffer = Buffer.alloc(3); 
         buffer.writeUInt8(OTBM_ITEM, 0);
         buffer.writeUInt16LE(node.id, 1);
         buffer = Buffer.concat([buffer, writeAttributes(node)]);
         break;
       case "OTBM_WAYPOINTS":
-        buffer = new Buffer(1);
+        buffer = Buffer.alloc(1); 
         buffer.writeUInt8(OTBM_WAYPOINTS, 0);
         break;
       case "OTBM_TOWNS":
-        buffer = new Buffer(1);
+        buffer = Buffer.alloc(1);
         buffer.writeUInt8(OTBM_TOWNS, 0);
         break;
       default:
         throw("Could not write node. Unknown node type: " + node.type); 
     }
 
+    return escapeCharacters(buffer);
+  
+  }
+
+  function escapeCharacters(buffer) {
+
+    /* FUNCTION escapeCharacters
+     * Escapes special 0xFD, 0xFE, 0xFF characters in buffer
+     */
+
     for(var i = 0; i < buffer.length; i++) {
       if(buffer.readUInt8(i) === 0xFF || buffer.readUInt8(i) === 0xFE || buffer.readUInt8(i) === 0xFD) {
-        buffer = Buffer.concat([buffer.slice(0, i), new Buffer([0xFD]), buffer.slice(i)]); i++;
+        buffer = Buffer.concat([buffer.slice(0, i), Buffer.from([0xFD]), buffer.slice(i)]); i++;
       }
     }
-  
+
     return buffer;
-  
+
   }
   
   function writeASCIIString16LE(string) {
   
-    /* writeASCIIString16LE
+    /* FUNCTION writeASCIIString16LE
      * Writes an ASCII string prefixed with its string length (2 bytes)
      */
   
-    var buffer = new Buffer(2 + string.length);
+    var buffer = Buffer.alloc(2 + string.length);
     buffer.writeUInt16LE(string.length, 0);
     buffer.write(string, 2, string.length, "ASCII");
     return buffer;
@@ -172,10 +182,10 @@ function writeOTBM(__OUTFILE__, data) {
      */
   
     var buffer;
-    var attributeBuffer = new Buffer(0);
+    var attributeBuffer = Buffer.alloc(0); 
   
     if(node.destination) {
-      buffer = new Buffer(6);
+      buffer = Buffer.alloc(6);
       buffer.writeUInt8(OTBM_ATTR_TELE_DEST);
       buffer.writeUInt16LE(node.destination.x, 1);
       buffer.writeUInt16LE(node.destination.y, 3);
@@ -185,14 +195,14 @@ function writeOTBM(__OUTFILE__, data) {
   
     // Write description property
     if(node.description) {
-      buffer = new Buffer(1);
+      buffer = Buffer.alloc(1);
       buffer.writeUInt8(OTBM_ATTR_DESCRIPTION, 0);
       attributeBuffer = Buffer.concat([attributeBuffer, buffer, writeASCIIString16LE(node.description)])
     }
   
     // Node has an unique identifier
     if(node.uid) {
-      buffer = new Buffer(3);
+      buffer = Buffer.alloc(3);
       buffer.writeUInt8(OTBM_ATTR_UNIQUE_ID, 0);
       buffer.writeUInt16LE(node.uid, 1);
       attributeBuffer = Buffer.concat([attributeBuffer, buffer]);
@@ -200,7 +210,7 @@ function writeOTBM(__OUTFILE__, data) {
   
     // Node has an action identifier
     if(node.aid) {
-      buffer = new Buffer(3);
+      buffer = Buffer.alloc(3);
       buffer.writeUInt8(OTBM_ATTR_ACTION_ID, 0);
       buffer.writeUInt16LE(node.aid, 1);
       attributeBuffer = Buffer.concat([attributeBuffer, buffer]);
@@ -208,7 +218,7 @@ function writeOTBM(__OUTFILE__, data) {
   
     // Node has rune charges
     if(node.runeCharges) {
-      buffer = new Buffer(3);
+      buffer = Buffer.alloc(3);
       buffer.writeUInt8(OTBM_ATTR_RUNE_CHARGES);
       buffer.writeUInt16LE(node.runeCharges, 1);
       attributeBuffer = Buffer.concat([attributeBuffer, buffer]);
@@ -216,28 +226,28 @@ function writeOTBM(__OUTFILE__, data) {
   
     // Spawn file
     if(node.spawnfile) {
-      buffer = new Buffer(1);
+      buffer = Buffer.alloc(1);
       buffer.writeUInt8(OTBM_ATTR_EXT_SPAWN_FILE, 0);
       attributeBuffer = Buffer.concat([attributeBuffer, buffer, writeASCIIString16LE(node.spawnfile)])
     }
   
     // Text attribute
     if(node.text) {
-      buffer = new Buffer(1);
+      buffer = Buffer.alloc(1);
       buffer.writeUInt8(OTBM_ATTR_TEXT, 0);
       attributeBuffer = Buffer.concat([attributeBuffer, buffer, writeASCIIString16LE(node.text)])
     }
   
     // House file
     if(node.housefile) {
-      buffer = new Buffer(1);
+      buffer = Buffer.alloc(1);
       buffer.writeUInt8(OTBM_ATTR_EXT_HOUSE_FILE, 0);
       attributeBuffer = Buffer.concat([attributeBuffer, buffer, writeASCIIString16LE(node.housefile)])
     }
   
     // Write OTBM_ATTR_ITEM
     if(node.tileid) {
-      buffer = new Buffer(3);
+      buffer = Buffer.alloc(3);
       buffer.writeUInt8(OTBM_ATTR_ITEM, 0);
       buffer.writeUInt16LE(node.tileid, 1);
       attributeBuffer = Buffer.concat([attributeBuffer, buffer]);
@@ -245,7 +255,7 @@ function writeOTBM(__OUTFILE__, data) {
   
     // Write node count
     if(node.count) {
-      buffer = new Buffer(2);
+      buffer = Buffer.alloc(2);
       buffer.writeUInt8(OTBM_ATTR_COUNT, 0);
       buffer.writeUInt8(node.count, 1);
       attributeBuffer = Buffer.concat([attributeBuffer, buffer]);
@@ -256,7 +266,7 @@ function writeOTBM(__OUTFILE__, data) {
   }
 
   // OTBM Header
-  const VERSION = new Buffer([0x00, 0x00, 0x00, 0x00]);
+  const VERSION = Buffer.from([0x00, 0x00, 0x00, 0x00]);
 
   // Write all nodes
   fs.writeFileSync(__OUTFILE__, Buffer.concat([VERSION, writeNode(data.data)]));
@@ -288,7 +298,7 @@ function readOTBM(__INFILE__) {
       // High level map data (e.g. areas, towns, and waypoints)
       case OTBM_MAP_DATA:
         this.type = "OTBM_MAP_DATA";
-        Object.assign(this, parseAttributes(data.slice(1)));
+        Object.assign(this, readAttributes(data.slice(1)));
         break;
   
       // A tile area
@@ -304,14 +314,14 @@ function readOTBM(__INFILE__) {
         this.type = "OTBM_TILE";
         this.x = data.readUInt8(1);
         this.y = data.readUInt8(2);
-        Object.assign(this, parseAttributes(data.slice(3)));
+        Object.assign(this, readAttributes(data.slice(3)));
         break;
   
       // A specific item inside the parent tile
       case OTBM_ITEM:
         this.type = "OTBM_ITEM";
         this.id = data.readUInt16LE(1);
-        Object.assign(this, parseAttributes(data.slice(3)));
+        Object.assign(this, readAttributes(data.slice(3)));
         break;
   
       // Parse OTBM_HOUSETILE entity
@@ -320,7 +330,7 @@ function readOTBM(__INFILE__) {
         this.x = data.readUInt8(1);
         this.y = data.readUInt8(2);
         this.houseId = data.readUInt32LE(3);
-        Object.assign(this, parseAttributes(data.slice(7)));
+        Object.assign(this, readAttributes(data.slice(7)));
         break;
   
       // Parse OTBM_WAYPOINTS structure
@@ -431,9 +441,9 @@ function readOTBM(__INFILE__) {
     
   }
   
-  function parseAttributes(data) {
+  function readAttributes(data) {
   
-    /* FUNCTION parseAttributes
+    /* FUNCTION readAttributes
      * Parses a nodes attribute structure
      */
   
@@ -557,9 +567,9 @@ function readOTBM(__INFILE__) {
     
   }
   
-  function parseNode(data) {
+  function readNode(data) {
   
-    /* FUNCTION parseNode
+    /* FUNCTION readNode
      * Recursively parses OTBM nodal tree structure
      */
    
@@ -593,7 +603,7 @@ function readOTBM(__INFILE__) {
   
       // A new node is started within another node: recursion
       if(cByte === NODE_START) {
-        child = parseNode(data.slice(i));
+        child = readNode(data.slice(i));
         children.push(child.node);
   
         // Skip index over full child length
@@ -629,7 +639,7 @@ function readOTBM(__INFILE__) {
   var mapData = {
     "version": __VERSION__,
     "identifier": MAP_IDENTIFIER,
-    "data": parseNode(data.slice(4)).node
+    "data": readNode(data.slice(4)).node
   }
 
   return mapData;
