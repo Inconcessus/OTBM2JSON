@@ -405,23 +405,27 @@ function readOTBM(__INFILE__) {
      * Removes 0xFD escape character from the byte string
      */
   
-    var iEsc = -1;
-  
+    var iEsc = 0;
+    var index;
+
     while(true) {
-  
+
       // Find the next escape character
-      iEsc = nodeData.slice(iEsc + 1).indexOf(NODE_ESC);
-  
+      index = nodeData.slice(++iEsc).indexOf(NODE_ESC);
+
       // No more: stop iteration
-      if(iEsc === -1) {
+      if(index === -1) {
         return nodeData;
       }
-  
+
+      iEsc = iEsc + index;
+
       // Remove the character from the buffer
       nodeData = Buffer.concat([
         nodeData.slice(0, iEsc),
         nodeData.slice(iEsc + 1)
       ]);
+
     }
     
   };
