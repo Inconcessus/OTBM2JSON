@@ -113,6 +113,15 @@ function writeOTBM(__OUTFILE__, data) {
         buffer.writeUInt16LE(node.id, 1);
         buffer = Buffer.concat([buffer, writeAttributes(node)]);
         break;
+      case HEADERS.OTBM_WAYPOINT:
+        buffer = Buffer.alloc(3 + node.name.length + 5);
+        buffer.writeUInt8(HEADERS.OTBM_WAYPOINT, 0);
+        buffer.writeUInt16LE(node.name.length, 1)
+        buffer.write(node.name, 3, "ASCII");
+        buffer.writeUInt16LE(node.x, 3 + node.name.length);
+        buffer.writeUInt16LE(node.y, 3 + node.name.length + 2);
+        buffer.writeUInt8(node.z, 3 + node.name.length + 4);
+        break;
       case HEADERS.OTBM_WAYPOINTS:
         buffer = Buffer.alloc(1); 
         buffer.writeUInt8(HEADERS.OTBM_WAYPOINTS, 0);
