@@ -33,16 +33,16 @@ mapData.data.nodes.forEach(function(x) {
 
   x.features.forEach(function(x) {
 
-    if(x.type !== "OTBM_TILE_AREA") return; 
+    if(x.type !== otbm2json.HEADERS.OTBM_TILE_AREA) return; 
 
     x.tiles.forEach(function(x) {
 
-      if(x.type !== "OTBM_TILE") return; 
+      if(x.type !== otbm2json.HEADERS.OTBM_TILE) return; 
 
       // On 1/4th of all tiles put a random tree
       if(Math.random() < 0.25) {
         x.items = [{ 
-          "type": "OTBM_ITEM",
+          "type": otbm2json.HEADERS.OTBM_ITEM,
           "id": randomTree()
         }];
       }
