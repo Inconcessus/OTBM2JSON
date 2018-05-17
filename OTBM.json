@@ -1,111 +1,112 @@
 {
-	"version": "0.1.0",
+	"version": "1.0.0",
 	"identifier": 0,
-	"OTBMHeader": {
+	"data": {
+		"type": 0,
 		"version": 2,
 		"mapWidth": 2048,
 		"mapHeight": 2048,
 		"itemsMajorVersion": 3,
-		"itemsMinorVersion": 57
-	},
-	"data": {
-		"type": "OTBM_MAP_DATA",
-		"description": "Saved with Remere's Map Editor 3.3 No map description available.",
-		"spawnfile": "map-spawn.xml",
-		"housefile": "map-house.xml",
-		"features": [{
-			"type": "OTBM_TILE_AREA",
-			"x": 768,
-			"y": 768,
-			"z": 7,
-			"tiles": [{
-				"type": "OTBM_TILE",
-				"x": 231,
-				"y": 242,
-				"id": 100
-			}, {
-				"type": "OTBM_TILE",
-				"x": 231,
-				"y": 243,
-				"id": 100,
-				"items": [{
-					"type": "OTBM_ITEM",
-					"id": 2261,
-					"count": 6,
-					"runeCharges": 6
-				}]
-			}, {
-				"type": "OTBM_TILE",
-				"x": 232,
-				"y": 242,
-				"id": 100
-			}, {
-				"type": "OTBM_TILE",
-				"x": 232,
-				"y": 243,
-				"id": 100,
-				"items": [{
-					"type": "OTBM_ITEM",
-					"id": 1397,
-					"aid": 10001,
-					"uid": 10002,
-					"destination": {
-						"x": 3,
-						"y": 3,
-						"z": 7
-					}
-				}]
-			}, {
-				"type": "OTBM_TILE",
-				"x": 233,
-				"y": 242,
-				"id": 100
-			}, {
-				"type": "OTBM_TILE",
-				"x": 233,
-				"y": 243,
-				"id": 100
-			}, {
-				"type": "OTBM_TILE",
-				"x": 231,
-				"y": 244,
-				"id": 100,
-				"items": [{
-					"type": "OTBM_ITEM",
-					"id": 1988,
-					"content": [{
-						"type": "OTBM_ITEM",
-						"id": 1950,
-						"text": "Time is a flat circle."
-					}, {
-						"type": "OTBM_ITEM",
-						"id": 1997,
+		"itemsMinorVersion": 57,
+		"nodes": [{
+			"type": 2,
+			"description": "Saved with Remere's Map Editor 3.3 No map description available.",
+			"spawnfile": "map-spawn.xml",
+			"housefile": "map-house.xml",
+			"features": [{
+				"type": 4,
+				"x": 768,
+				"y": 768,
+				"z": 7,
+				"tiles": [{
+					"type": 5,
+					"x": 231,
+					"y": 242,
+					"tileid": 100
+				}, {
+					"type": 5,
+					"x": 231,
+					"y": 243,
+					"tileid": 100,
+					"items": [{
+						"type": 6,
+						"id": 2261,
+						"count": 6,
+						"runeCharges": 6
+					}]
+				}, {
+					"type": 5,
+					"x": 232,
+					"y": 242,
+					"tileid": 100
+				}, {
+					"type": 5,
+					"x": 232,
+					"y": 243,
+					"tileid": 100,
+					"items": [{
+						"type": 6,
+						"id": 1397,
+						"aid": 10001,
+						"uid": 10002,
+						"destination": {
+							"x": 3,
+							"y": 3,
+							"z": 7
+						}
+					}]
+				}, {
+					"type": 5,
+					"x": 233,
+					"y": 242,
+					"tileid": 100
+				}, {
+					"type": 5,
+					"x": 233,
+					"y": 243,
+					"tileid": 100
+				}, {
+					"type": 5,
+					"x": 231,
+					"y": 244,
+					"tileid": 100,
+					"items": [{
+						"type": 6,
+						"id": 1988,
 						"content": [{
-							"type": "OTBM_ITEM",
-							"id": 2153
+							"type": 6,
+							"id": 1950,
+							"text": "Time is a flat circle."
+						}, {
+							"type": 6,
+							"id": 1997,
+							"content": [{
+								"type": 6,
+								"id": 2153
+							}]
 						}]
+					}]
+				}, {
+					"type": 5,
+					"x": 232,
+					"y": 244,
+					"tileid": 100
+				}, {
+					"type": 5,
+					"x": 233,
+					"y": 244,
+					"tileid": 100,
+					"items": [{
+						"type": 6,
+						"id": 2148,
+						"count": 5
 					}]
 				}]
 			}, {
-				"type": "OTBM_TILE",
-				"x": 232,
-				"y": 244,
-				"id": 100
+				"type": 12
 			}, {
-				"type": "OTBM_TILE",
-				"x": 233,
-				"y": 244,
-				"id": 100,
-				"items": [{
-					"type": "OTBM_ITEM",
-					"id": 2148,
-					"count": 5
-				}]
+				"type": 15
 			}]
-		}, {
-			"type": "OTBM_TOWNS"
-		}, {
-			"type": "OTBM_WAYPOINTS"
 		}]
 	}
 }
