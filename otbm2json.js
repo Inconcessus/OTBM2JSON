@@ -19,18 +19,12 @@ function writeOTBM(__OUTFILE__, data) {
      * Recursively writes all JSON nodes to OTBM node structure
      */
 
-    // Get the child nodes for this particular nodes: recursion
-    var child = getChildNode(node);
-    var childData = child ? Buffer.concat(child.map(writeNode)) : Buffer.alloc(0); 
-
-    // Finally parse the element itself
-    var nodeData = writeElement(node);
-
-    // Concatenate own data with child and pad the nod with start & end
+    // Concatenate own data with children (recursively)
+    // and pad the node with start & end identifier
     return Buffer.concat([
       Buffer.from([NODE_INIT]),
-      nodeData,
-      childData,
+      writeElement(node),
+      Buffer.concat(getChildNode(node).map(writeNode)),
       Buffer.from([NODE_TERM])
     ]);
 
@@ -39,6 +33,16 @@ function writeOTBM(__OUTFILE__, data) {
   function getChildNode(node) {
 
     /* FUNCTION getChildNode
+     * Returns child node or dummy array if child does not exist
+     */
+
+    return getChildNodeReal(node) || new Array();
+
+  }
+
+  function getChildNodeReal(node) {
+
+    /* FUNCTION getChildNodeReal
      * Give children of a node a particular identifier
      */
 
@@ -56,7 +60,6 @@ function writeOTBM(__OUTFILE__, data) {
         return node.features;
       default:
         return node.nodes;
-        break;
     }
 
   }
@@ -267,18 +270,30 @@ function writeOTBM(__OUTFILE__, data) {
     if(node.zones) {
       buffer = Buffer.alloc(5);
       buffer.writeUInt8(HEADERS.OTBM_ATTR_TILE_FLAGS, 0);
-      var flags = HEADERS.TILESTATE_NONE;
-      flags |= node.zones.protection && HEADERS.TILESTATE_PROTECTIONZONE;
-      flags |= node.zones.noPVP && HEADERS.TILESTATE_NOPVP;
-      flags |= node.zones.noLogout && HEADERS.TILESTATE_NOLOGOUT;
-      flags |= node.zones.PVPZone && HEADERS.TILESTATE_PVPZONE;
-      flags |= node.zones.refresh && HEADERS.TILESTATE_REFRESH;
-      buffer.writeUInt32LE(flags, 1);
+      buffer.writeUInt32LE(writeFlags(node.zones), 1);
       attributeBuffer = Buffer.concat([attributeBuffer, buffer]);
     }
 
     return attributeBuffer;
 
+  }
+
+  function writeFlags(zones) {
+  
+    /* FUNCTION writeFlags
+     * Writes OTBM tile bit-flags to integer
+     */
+  
+    var flags = HEADERS.TILESTATE_NONE;
+  
+    flags |= zones.protection && HEADERS.TILESTATE_PROTECTIONZONE;
+    flags |= zones.noPVP && HEADERS.TILESTATE_NOPVP;
+    flags |= zones.noLogout && HEADERS.TILESTATE_NOLOGOUT;
+    flags |= zones.PVPZone && HEADERS.TILESTATE_PVPZONE;
+    flags |= zones.refresh && HEADERS.TILESTATE_REFRESH;
+  
+    return flags;
+  
   }
 
   // OTBM Header
@@ -375,8 +390,7 @@ function readOTBM(__INFILE__) {
       // Single town entity
       case HEADERS.OTBM_TOWN:
         this.type = HEADERS.OTBM_TOWN;
-        this.townid = data.readUInt16LE(1);
-        // Some two extra bytes ???
+        this.townid = data.readUInt32LE(1);
         this.name = readASCIIString16LE(data.slice(5));
         this.x = data.readUInt16LE(7 + this.name.length);
         this.y = data.readUInt16LE(9 + this.name.length);
@@ -530,17 +544,7 @@ function readOTBM(__INFILE__) {
 
         // Tile flags indicating the type of tile (4 Bytes)
         case HEADERS.OTBM_ATTR_TILE_FLAGS:
-          var flags = data.readUInt32LE(i);
-
-          // Read individual tile flags using bitwise AND &
-          properties.zones = {
-            "protection": flags & HEADERS.TILESTATE_PROTECTIONZONE,
-            "noPVP": flags & HEADERS.TILESTATE_NOPVP,
-            "noLogout": flags & HEADERS.TILESTATE_NOLOGOUT,
-            "PVPZone": flags & HEADERS.TILESTATE_PVPZONE,
-            "refresh": flags & HEADERS.TILESTATE_REFRESH
-          }
-
+          properties.zones = readFlags(data.readUInt32LE(i));
           i += 4;
           break;
 
@@ -553,7 +557,7 @@ function readOTBM(__INFILE__) {
         // The item count (1 byte)
         case HEADERS.OTBM_ATTR_COUNT:
           properties.count = data.readUInt8(i);
-          i++;
+          i += 1;
           break;
 
         // The main item identifier	(2 bytes)
@@ -588,6 +592,23 @@ function readOTBM(__INFILE__) {
     }
 
     return properties;
+
+  }
+
+  function readFlags(flags) {
+
+    /* FUNCTION readFlags
+     * Reads OTBM bit flags
+     */
+
+    // Read individual tile flags using bitwise AND &
+    return {
+      "protection": flags & HEADERS.TILESTATE_PROTECTIONZONE,
+      "noPVP": flags & HEADERS.TILESTATE_NOPVP,
+      "noLogout": flags & HEADERS.TILESTATE_NOLOGOUT,
+      "PVPZone": flags & HEADERS.TILESTATE_PVPZONE,
+      "refresh": flags & HEADERS.TILESTATE_REFRESH
+    }
 
   }
 
