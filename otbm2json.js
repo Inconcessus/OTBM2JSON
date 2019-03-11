@@ -5,7 +5,7 @@ const NODE_ESC = 0xFD;
 const NODE_INIT = 0xFE;
 const NODE_TERM = 0xFF;
 
-__VERSION__ = "1.0.0";
+__VERSION__ = "1.0.1";
 
 function writeOTBM(__OUTFILE__, data) {
 
@@ -263,6 +263,22 @@ function writeOTBM(__OUTFILE__, data) {
       buffer = Buffer.alloc(2);
       buffer.writeUInt8(HEADERS.OTBM_ATTR_COUNT, 0);
       buffer.writeUInt8(node.count, 1);
+      attributeBuffer = Buffer.concat([attributeBuffer, buffer]);
+    }
+
+    // Write depot identifier
+    if(node.depotId) {
+      buffer = Buffer.alloc(3);
+      buffer.writeUInt8(HEADERS.OTBM_ATTR_DEPOT_ID, 0);
+      buffer.writeUInt16LE(node.depotId, 1);
+      attributeBuffer = Buffer.concat([attributeBuffer, buffer]);
+    }
+
+    // Write house door ID
+    if(node.houseDoorId) {
+      buffer = Buffer.alloc(2);
+      buffer.writeUInt8(HEADERS.OTBM_ATTR_HOUSEDOORID, 0);
+      buffer.writeUInt8(node.houseDoorId, 1);
       attributeBuffer = Buffer.concat([attributeBuffer, buffer]);
     }
 
