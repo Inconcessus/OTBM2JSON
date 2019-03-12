@@ -25,6 +25,11 @@ function writeNode(node) {
    * Recursively writes all JSON nodes to OTBM node structure
    */
 
+  // Already binary: return immediately
+  if(node instanceof Buffer) {
+    return node;
+  }
+
   // Concatenate own data with children (recursively)
   // and pad the node with start & end identifier
   return Buffer.concat([
@@ -333,7 +338,7 @@ function serializeOTBM(data) {
 
 }
 
-function readOTBM(__INFILE__, featureCallback) {
+function readOTBM(__INFILE__, transformCallback) {
 
   /* FUNCTION readOTBM
    * Reads OTBM file to intermediary JSON structure
@@ -688,20 +693,15 @@ function readOTBM(__INFILE__, featureCallback) {
       // Node termination
       if(cByte === NODE_TERM) {
 
+        // Once the node has been terminated we can create it from binary
         var node = new Node(nodeData, children);
 
         // When streaming areas return early and discard the node object
-        if(featureCallback instanceof Function) {
+        if(transformCallback instanceof Function) {
 
-          // When a feature is completed let it dangle for garbage collection but emit it for writing
-          if(node.type === HEADERS.OTBM_TILE_AREA || node.type === HEADERS.OTBM_TOWNS || node.type === HEADERS.OTBM_WAYPOINTS) {
-
-            // Call transform function
-            featureCallback(node);
-
-            // Only return the index and forget the node
-            return { i }
-
+          // When a feature is completed after transformation convert it back to OTBM
+          if(node.type === HEADERS.OTBM_TILE_AREA) {
+            node = writeNode(transformCallback(node));
           }
 
         }
@@ -740,32 +740,13 @@ function readOTBM(__INFILE__, featureCallback) {
 function transformOTBM(__INFILE__, __OUTFILE__, transformation) {
 
    /*
-    * Class transformOTBM
+    * Function transformOTBM
     * Hopefully a lower-memory transformation function for OTBM
     * An input file, output file, and transformation function must be passed
     */
 
-  // Create a writable stream
-  var features = new Array();
-
-  // Read the OTBM file and fire the callback on each feature
-  var mapHeader = readOTBM(__INFILE__, function(feature) {
-
-    // Save the feature in binary (this should save a lot of space)
-    features.push(writeNode(transformation(feature)));
-
-  });
-
-  // Write the object features
-  // Remove termination characters from header and append them after the features
-  fs.createWriteStream(__OUTFILE__).write(
-    Buffer.concat([
-      Buffer.alloc(4).fill(0x00),
-      writeNode(mapHeader.data).slice(0, -2),
-      Buffer.concat(features),
-      Buffer.from([0xFF, 0xFF])
-    ])
-   );
+  // Read the OTBM file and fire the transformation callback on each feature
+  writeOTBM(__OUTFILE__, readOTBM(__INFILE__, transformation));
 
 }
 

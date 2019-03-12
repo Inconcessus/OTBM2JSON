@@ -18,14 +18,9 @@ function transformation(feature) {
    * All features are passed through this function and can be modified
    * Make sure to modify the object here and return the feature!
    *
-   * Features may be either of: OTBM_TILE_AREA, OTBM_WAYPOINTS, OTBM_TOWNS
+   * Features may be either of: OTBM_TILE_AREA
    *
    */
-
-  // Skip anything that is not a tile area but return the feature!
-  if(feature.type !== otbm2json.HEADERS.OTBM_TILE_AREA) {
-    return feature;
-  }
 
   // For each tile area; go over all actual tiles
   feature.tiles.forEach(function(tile) {
