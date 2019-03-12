@@ -1,11 +1,13 @@
 const fs = require("fs");
+const { EventEmitter } = require("events");
+const util = require("util");
 const HEADERS = require("./lib/headers");
 
 const NODE_ESC = 0xFD;
 const NODE_INIT = 0xFE;
 const NODE_TERM = 0xFF;
 
-__VERSION__ = "1.0.1";
+__VERSION__ = "1.1.0";
 
 function writeOTBM(__OUTFILE__, data) {
 
@@ -333,7 +335,7 @@ function serializeOTBM(data) {
 
 }
 
-function readOTBM(__INFILE__) {
+function readOTBM(__INFILE__, emitter) {
 
   /* FUNCTION readOTBM
    * Reads OTBM file to intermediary JSON structure
@@ -430,6 +432,17 @@ function readOTBM(__INFILE__) {
     // Set node children
     if(children.length) {
       this.setChildren(children);
+    }
+
+    if(emitter instanceof StreamReader) {
+
+      switch(this.type) {
+        case HEADERS.OTBM_TILE:
+          return emitter.emit("tile", this);
+        case HEADERS.OTBM_ITEM:
+          return emitter.emit("item", this);
+      }
+
     }
 
   }
@@ -683,10 +696,16 @@ function readOTBM(__INFILE__) {
 
       // Node termination
       if(cByte === NODE_TERM) {
-        return {
-          "node": new Node(nodeData, children),
-          "i": i
+
+        var node = new Node(nodeData, children);
+
+        // When streaming return early and discard the node
+        if(emitter instanceof StreamReader) {
+          return { i }
         }
+
+        return { i, node }
+
       }
 
       i++;
@@ -716,8 +735,33 @@ function readOTBM(__INFILE__) {
 
 }
 
+var StreamReader = function() {
+
+   /*
+    * Class StreamReader
+    * Reader inheriting from EventEmitter
+    */
+
+   EventEmitter.call(this);
+
+}
+
+util.inherits(StreamReader, EventEmitter);
+
+StreamReader.prototype.read = function(__INFILE__) {
+
+   /*
+    * Function StreamReader::read
+    * Reads OTBM and passes a StreamReader that events can be emit through 
+    */
+
+   readOTBM(__INFILE__, this);
+
+}
+
 module.exports.read = readOTBM;
 module.exports.write = writeOTBM;
 module.exports.serialize = serializeOTBM;
+module.exports.StreamReader = StreamReader;
 module.exports.HEADERS = HEADERS;
 module.exports.__VERSION__ = __VERSION__;
