@@ -28,5 +28,14 @@ An example script `examples/example.js` is provided. This script uses the `examp
   <img src="images/chess.png">
 </p>
 
+# API
+
+The application exposes some public functions:
+
+* read (Reads full OTBM file to memory in JSON structure)
+* write (Writes full JSON structure from memory to OTBM file)
+* serialize (Serializes JSON to OTBM buffer (binary))
+* transform (Transforms OTBM as a stream of tile areas (low memory footprint))
+
 # Version
 Current version 0.2.0. This is a work in progress.
