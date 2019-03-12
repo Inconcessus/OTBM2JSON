@@ -9,8 +9,21 @@ __VERSION__ = "1.0.1";
 
 function writeOTBM(__OUTFILE__, data) {
 
-  /* FUNCTION writeOTBM
+  /*
+   * Function writeOTBM
    * Writes OTBM from intermediary JSON structure
+   */
+
+  // Write all nodes
+  fs.writeFileSync(__OUTFILE__, serializeOTBM(data));
+  
+}
+
+function serializeOTBM(data) {
+
+  /*
+   * Function serializeOTBM
+   * Serializes OTBM from intermediary JSON structure
    */
 
   function writeNode(node) {
@@ -316,7 +329,7 @@ function writeOTBM(__OUTFILE__, data) {
   const VERSION = Buffer.alloc(4).fill(0x00);
 
   // Write all nodes
-  fs.writeFileSync(__OUTFILE__, Buffer.concat([VERSION, writeNode(data.data)]));
+  return Buffer.concat([VERSION, writeNode(data.data)]);
 
 }
 
@@ -705,5 +718,6 @@ function readOTBM(__INFILE__) {
 
 module.exports.read = readOTBM;
 module.exports.write = writeOTBM;
+module.exports.serialize = serializeOTBM;
 module.exports.HEADERS = HEADERS;
 module.exports.__VERSION__ = __VERSION__;
