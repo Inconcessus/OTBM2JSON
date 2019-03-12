@@ -434,17 +434,6 @@ function readOTBM(__INFILE__, emitter) {
       this.setChildren(children);
     }
 
-    if(emitter instanceof StreamReader) {
-
-      switch(this.type) {
-        case HEADERS.OTBM_TILE:
-          return emitter.emit("tile", this);
-        case HEADERS.OTBM_ITEM:
-          return emitter.emit("item", this);
-      }
-
-    }
-
   }
 
   Node.prototype.removeEscapeCharacters = function(nodeData) {
@@ -699,8 +688,9 @@ function readOTBM(__INFILE__, emitter) {
 
         var node = new Node(nodeData, children);
 
-        // When streaming return early and discard the node
-        if(emitter instanceof StreamReader) {
+        // When streaming areas return early and discard the node object
+        if(emitter instanceof StreamReader && node.type === HEADERS.OTBM_TILE_AREA) {
+          emitter.emit("area", node);
           return { i }
         }
 
