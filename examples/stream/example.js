@@ -5,8 +5,8 @@
 
 const otbm2json = require("../../otbm2json");
 
-const WHITE_TILE = 406;
-const BLACK_TILE = 407;
+const WHITE_TILE = 100;
+const BLACK_TILE = 100;
 
 // Transformation stream input, output, transformation function
 otbm2json.transformOTBM("void.otbm", "chess.otbm", transformation);
@@ -26,7 +26,7 @@ function transformation(feature) {
   feature.tiles.forEach(function(tile) {
 
     // Skip anything that is not a tile (e.g. house tiles)
-    if(tile.type !== otbm2json.HEADERS.OTBM_TILE) return
+    if(tile.type !== otbm2json.HEADERS.OTBM_TILE) return feature;
 
     // Create a chessboard pattern using bitwise operators
     // Replace the id property of each tile

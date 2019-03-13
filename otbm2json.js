@@ -1,5 +1,6 @@
 const fs = require("fs");
 const HEADERS = require("./lib/headers");
+const Node = require("./lib/node");
 
 const NODE_ESC = 0xFD;
 const NODE_INIT = 0xFE;
@@ -21,7 +22,8 @@ function writeOTBM(__OUTFILE__, data) {
 
 function writeNode(node) {
 
-  /* FUNCTION writeNode
+  /*
+   * Function writeNode
    * Recursively writes all JSON nodes to OTBM node structure
    */
 
@@ -43,7 +45,8 @@ function writeNode(node) {
 
 function getChildNode(node) {
 
-  /* FUNCTION getChildNode
+  /*
+   * Function getChildNode
    * Returns child node or dummy array if child does not exist
    */
 
@@ -53,7 +56,8 @@ function getChildNode(node) {
 
 function getChildNodeReal(node) {
 
-  /* FUNCTION getChildNodeReal
+  /*
+   * Function getChildNodeReal
    * Give children of a node a particular identifier
    */
 
@@ -77,7 +81,8 @@ function getChildNodeReal(node) {
 
 function writeElement(node) {
 
-  /* FUNCTION Node.setChildren
+  /*
+   * Function Node.setChildren
    * Give children of a node a particular identifier
    */
 
@@ -164,7 +169,8 @@ function writeElement(node) {
 
 function escapeCharacters(buffer) {
 
-  /* FUNCTION escapeCharacters
+  /*
+   * Function escapeCharacters
    * Escapes special 0xFD, 0xFE, 0xFF characters in buffer
    */
 
@@ -180,20 +186,23 @@ function escapeCharacters(buffer) {
 
 function writeASCIIString16LE(string) {
 
-  /* FUNCTION writeASCIIString16LE
+  /*
+   * Function writeASCIIString16LE
    * Writes an ASCII string prefixed with its string length (2 bytes)
    */
 
   var buffer = Buffer.alloc(2 + string.length);
-  buffer.writeUInt16LE(string.length, 0);
+  buffer.writeUInt16BE(string.length, 0);
   buffer.write(string, 2, string.length, "ASCII");
+
   return buffer;
 
 }
 
 function writeAttributes(node) {
 
-  /* FUNCTION writeAttributes
+  /*
+   * Function writeAttributes
    * Writes additional node attributes
    */
 
@@ -307,7 +316,8 @@ function writeAttributes(node) {
 
 function writeFlags(zones) {
 
-  /* FUNCTION writeFlags
+  /*
+   * Function writeFlags
    * Writes OTBM tile bit-flags to integer
    */
 
@@ -340,353 +350,47 @@ function serializeOTBM(data) {
 
 function readOTBM(__INFILE__, transformCallback) {
 
-  /* FUNCTION readOTBM
+  /*
+   * Function readOTBM
    * Reads OTBM file to intermediary JSON structure
    */
 
-  var Node = function(data, children) {
-
-    /* CLASS Node
-     * Holds a particular OTBM node of type (see below)
-     */
-
-    // Remove the escape character from the node data string
-    data = this.removeEscapeCharacters(data);
-
-    switch(data.readUInt8(0)) {
-
-      case HEADERS.OTBM_MAP_HEADER:
-        this.type = HEADERS.OTBM_MAP_HEADER;
-        this.version = data.readUInt32LE(1),
-        this.mapWidth = data.readUInt16LE(5),
-        this.mapHeight = data.readUInt16LE(7),
-        this.itemsMajorVersion = data.readUInt32LE(9),
-        this.itemsMinorVersion = data.readUInt32LE(13)
-        break;
-
-      // High level map data (e.g. areas, towns, and waypoints)
-      case HEADERS.OTBM_MAP_DATA:
-        this.type = HEADERS.OTBM_MAP_DATA;
-        Object.assign(this, readAttributes(data.slice(1)));
-        break;
-
-      // A tile area
-      case HEADERS.OTBM_TILE_AREA:
-        this.type = HEADERS.OTBM_TILE_AREA;
-        this.x = data.readUInt16LE(1);
-        this.y = data.readUInt16LE(3);
-        this.z = data.readUInt8(5);
-        break;
-
-      // A specific tile at location inside the parent tile area
-      case HEADERS.OTBM_TILE:
-        this.type = HEADERS.OTBM_TILE;
-        this.x = data.readUInt8(1);
-        this.y = data.readUInt8(2);
-        Object.assign(this, readAttributes(data.slice(3)));
-        break;
-
-      // A specific item inside the parent tile
-      case HEADERS.OTBM_ITEM:
-        this.type = HEADERS.OTBM_ITEM;
-        this.id = data.readUInt16LE(1);
-        Object.assign(this, readAttributes(data.slice(3)));
-        break;
-
-      // Parse HEADERS.OTBM_HOUSETILE entity
-      case HEADERS.OTBM_HOUSETILE:
-        this.type = HEADERS.OTBM_HOUSETILE;
-        this.x = data.readUInt8(1);
-        this.y = data.readUInt8(2);
-        this.houseId = data.readUInt32LE(3);
-        Object.assign(this, readAttributes(data.slice(7)));
-        break;
-
-      // Parse HEADERS.OTBM_WAYPOINTS structure
-      case HEADERS.OTBM_WAYPOINTS:
-        this.type = HEADERS.OTBM_WAYPOINTS;
-        break;
-
-      // Single waypoint entity
-      case HEADERS.OTBM_WAYPOINT:
-        this.type = HEADERS.OTBM_WAYPOINT;
-        this.name = readASCIIString16LE(data.slice(1));
-        this.x = data.readUInt16LE(3 + this.name.length);
-        this.y = data.readUInt16LE(5 + this.name.length);
-        this.z = data.readUInt8(7 + this.name.length);
-        break;
-
-      // Parse HEADERS.OTBM_TOWNS
-      case HEADERS.OTBM_TOWNS:
-        this.type = HEADERS.OTBM_TOWNS;
-        break;
-
-      // Single town entity
-      case HEADERS.OTBM_TOWN:
-        this.type = HEADERS.OTBM_TOWN;
-        this.townid = data.readUInt32LE(1);
-        this.name = readASCIIString16LE(data.slice(5));
-        this.x = data.readUInt16LE(7 + this.name.length);
-        this.y = data.readUInt16LE(9 + this.name.length);
-        this.z = data.readUInt8(11 + this.name.length);
-        break;
-    }
-
-    // Set node children
-    if(children.length) {
-      this.setChildren(children);
-    }
-
-  }
-
-  Node.prototype.removeEscapeCharacters = function(nodeData) {
-
-    /* FUNCTION removeEscapeCharacter
-     * Removes 0xFD escape character from the byte string
-     */
-
-    var iEsc = 0;
-    var index;
-
-    while(true) {
-
-      // Find the next escape character
-      index = nodeData.slice(++iEsc).indexOf(NODE_ESC);
-
-      // No more: stop iteration
-      if(index === -1) {
-        return nodeData;
-      }
-
-      iEsc = iEsc + index;
-
-      // Remove the character from the buffer
-      nodeData = Buffer.concat([
-        nodeData.slice(0, iEsc),
-        nodeData.slice(iEsc + 1)
-      ]);
-
-    }
-
-  };
-
-  Node.prototype.setChildren = function(children) {
-
-    /* FUNCTION Node.setChildren
-     * Give children of a node a particular identifier
-     */
-
-    switch(this.type) {
-      case HEADERS.OTBM_TILE_AREA:
-        this.tiles = children;
-        break;
-      case HEADERS.OTBM_TILE:
-      case HEADERS.OTBM_HOUSETILE:
-        this.items = children;
-        break;
-      case HEADERS.OTBM_TOWNS:
-        this.towns = children;
-        break;
-      case HEADERS.OTBM_ITEM:
-        this.content = children;
-        break;
-      case HEADERS.OTBM_MAP_DATA:
-        this.features = children;
-        break;
-      default:
-        this.nodes = children;
-        break;
-    }
-
-  };
-
-  function readASCIIString16LE(data) {
-
-    /* FUNCTION readASCIIString16LE
-     * Reads a string of N bytes with its length
-     * deteremined by the value of its first two bytes
-     */
-
-    return data.slice(2, 2 + data.readUInt16LE(0)).toString("ASCII");
-
-  }
-
-  function readAttributes(data) {
-
-    /* FUNCTION readAttributes
-     * Parses a nodes attribute structure
-     */
-
-    var i = 0;
-
-    // Collect additional properties
-    var properties = new Object();
-
-    // Read buffer from beginning
-    while(i + 1 < data.length) {
-
-      // Read the leading byte
-      switch(data.readUInt8(i++)) {
-
-        // Text is written
-        case HEADERS.OTBM_ATTR_TEXT:
-          properties.text = readASCIIString16LE(data.slice(i));
-          i += properties.text.length + 2;
-          break;
-
-        // Spawn file name
-        case HEADERS.OTBM_ATTR_EXT_SPAWN_FILE:
-          properties.spawnfile = readASCIIString16LE(data.slice(i));
-          i += properties.spawnfile.length + 2;
-          break;
-
-        // House file name
-        case HEADERS.OTBM_ATTR_EXT_HOUSE_FILE:
-          properties.housefile = readASCIIString16LE(data.slice(i));
-          i += properties.housefile.length + 2;
-          break;
-
-        // House door identifier (1 byte)
-        case HEADERS.OTBM_ATTR_HOUSEDOORID:
-          properties.houseDoorId = data.readUInt8(i);
-          i += properties.houseDoorId.length + 2;
-          break;
-
-        // Description is written (N bytes)
-        // May be written multiple times
-        case HEADERS.OTBM_ATTR_DESCRIPTION:
-          var descriptionString = readASCIIString16LE(data.slice(i));
-          if(properties.description) {
-            properties.description = properties.description + " " + descriptionString;
-          } else {
-            properties.description = descriptionString;
-          }
-          i += descriptionString.length + 2;
-          break;
-
-        // Description is written (N bytes)
-        case HEADERS.OTBM_ATTR_DESC:
-          properties.text = readASCIIString16LE(data.slice(i));
-          i += properties.text.length + 2;
-          break;
-
-        // Depot identifier (2 byte)
-        case HEADERS.OTBM_ATTR_DEPOT_ID:
-          properties.depotId = data.readUInt16LE(i);
-          i += 2;
-          break;
-
-        // Tile flags indicating the type of tile (4 Bytes)
-        case HEADERS.OTBM_ATTR_TILE_FLAGS:
-          properties.zones = readFlags(data.readUInt32LE(i));
-          i += 4;
-          break;
-
-        // N (2 Bytes)
-        case HEADERS.OTBM_ATTR_RUNE_CHARGES:
-          properties.runeCharges = data.readUInt16LE(i);
-          i += 2;
-          break;
-
-        // The item count (1 byte)
-        case HEADERS.OTBM_ATTR_COUNT:
-          properties.count = data.readUInt8(i);
-          i += 1;
-          break;
-
-        // The main item identifier	(2 bytes)
-        case HEADERS.OTBM_ATTR_ITEM:
-          properties.tileid = data.readUInt16LE(i);
-          i += 2;
-          break;
-
-        // Action identifier was set (2 bytes)
-        case HEADERS.OTBM_ATTR_ACTION_ID:
-          properties.aid = data.readUInt16LE(i);
-          i += 2;
-          break;
-
-        // Unique identifier was set (2 bytes)
-        case HEADERS.OTBM_ATTR_UNIQUE_ID:
-          properties.uid = data.readUInt16LE(i);
-          i += 2;
-          break;
-
-        // Teleporter given destination (x, y, z using 2, 2, 1 bytes respectively)
-        case HEADERS.OTBM_ATTR_TELE_DEST:
-          properties.destination = {
-            "x": data.readUInt16LE(i),
-            "y": data.readUInt16LE(i + 2),
-            "z": data.readUInt8(i + 4)
-          }
-          i += 5;
-          break;
-      }
-
-    }
-
-    return properties;
-
-  }
-
-  function readFlags(flags) {
-
-    /* FUNCTION readFlags
-     * Reads OTBM bit flags
-     */
-
-    // Read individual tile flags using bitwise AND &
-    return {
-      "protection": flags & HEADERS.TILESTATE_PROTECTIONZONE,
-      "noPVP": flags & HEADERS.TILESTATE_NOPVP,
-      "noLogout": flags & HEADERS.TILESTATE_NOLOGOUT,
-      "PVPZone": flags & HEADERS.TILESTATE_PVPZONE,
-      "refresh": flags & HEADERS.TILESTATE_REFRESH
-    }
-
-  }
-
   function readNode(data) {
 
-    /* FUNCTION readNode
+    /*
+     * Function readNode
      * Recursively parses OTBM nodal tree structure
      */
 
     // Cut off the initializing 0xFE identifier
-    data = data.slice(1);
-
-    var i = 0;
     var children = new Array();
     var nodeData = null;
-    var child;
 
-    // Start reading the array
-    while(i < data.length) {
+    // Start reading the array but skip first 0xFE identifier
+    for(var i = 1; i < data.length; i++) {
 
       var cByte = data.readUInt8(i);
 
-      // Data belonging to the parent node, between 0xFE and (OxFE || 0xFF)
-      if(nodeData === null && (cByte === NODE_INIT || cByte === NODE_TERM)) {
-        nodeData = data.slice(0, i);
-      }
-
       // Escape character: skip reading this and following byte
       if(cByte === NODE_ESC) {
-        i = i + 2;
+        i++;
         continue;
+      }
+
+      // Data belonging to the parent node, between 0xFE and (OxFE || 0xFF)
+      if(nodeData === null && (cByte === NODE_INIT || cByte === NODE_TERM)) {
+        nodeData = data.slice(1, i);
       }
 
       // A new node is started within another node: recursion
       if(cByte === NODE_INIT) {
 
-        child = readNode(data.slice(i));
+        // Read the child
+        var child = readNode(data.slice(i));
+        children.push(child.node);
 
-        if(child.node) {
-          children.push(child.node);
-        }
-
-        // Skip index over full child length
-        i = i + 2 + child.i;
+        // Skip the index over the full child length and proceed reading
+        i = i + child.i;
         continue;
       }
 
@@ -699,7 +403,7 @@ function readOTBM(__INFILE__, transformCallback) {
         // When streaming areas return early and discard the node object
         if(transformCallback instanceof Function) {
 
-          // When a feature is completed after transformation convert it back to OTBM
+          // When a feature is completed after transformation convert it back to OTBM (binary)
           if(node.type === HEADERS.OTBM_TILE_AREA) {
             node = writeNode(transformCallback(node));
           }
@@ -709,8 +413,6 @@ function readOTBM(__INFILE__, transformCallback) {
         return { i, node }
 
       }
-
-      i++;
 
     }
 
